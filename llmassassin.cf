@@ -1,0 +1,75 @@
+# LLMAssassin - SpamAssassin configuration
+# /etc/spamassassin/llmassassin.cf
+#
+# Copy to /etc/spamassassin/llmassassin.cf and edit as needed.
+# The plugin must be loaded first — see llmassassin.pre
+
+# ── API Connection ────────────────────────────────────────────────────────────
+
+# Base URL of your OpenAI-compatible API (no trailing slash)
+llm_api_base      https://api.openai.com
+
+# Bearer token auth (OpenAI, Azure, etc.)
+# llm_api_key     sk-xxxxxxxxxxxxxxxxxxxxxxxx
+
+# Model to use
+llm_model         gpt-4.1
+
+# Request timeout in seconds
+llm_timeout       15
+
+# ── Scoring ───────────────────────────────────────────────────────────────────
+
+# Flat score when AI says spam — used when llm_score_map is not set.
+# Must match the 'score' directive below.
+llm_spam_score    6.0
+
+# Confidence-based score map (overrides llm_spam_score when set).
+# Format: low-high=score,low-high=score,...
+# Example below: high confidence hits harder, borderline hits softer.
+# llm_score_map   0.9-1.0=8.0,0.7-0.9=5.0,0.5-0.7=2.0
+
+# Fail behaviour when API is unreachable or errors:
+#   0 = fail open  (score 0, let other SA rules decide) [default]
+#   1 = fail closed (apply llm_fail_score)
+llm_fail_closed   0
+
+# Score applied on failure when llm_fail_closed = 1
+llm_fail_score    2.0
+
+# ── Behaviour ─────────────────────────────────────────────────────────────────
+
+# Dry run mode — call API and log verdict but never affect SA score.
+# Set to 1 to tune thresholds before going live.
+llm_dry_run       0
+
+# Skip AI check for SMTP-authenticated senders (your own users sending mail).
+# 0 = check everyone, 1 = skip authenticated senders
+llm_skip_authenticated  1
+
+# Rate limit: max API calls per minute across all users. 0 = unlimited.
+llm_max_calls_per_minute  0
+
+# Max body characters sent to AI (caps token usage and cost)
+llm_max_body_chars  8000
+
+# Path to rate limiter state file (must be writable by the SA user)
+# llm_rate_file   /tmp/llmassassin.rate
+
+# ── System prompt (optional override) ────────────────────────────────────────
+# Only change this if you have a specific use case.
+# Must instruct the model to return:
+#   {"spam": true/false, "confidence": 0.0-1.0, "reason": "<short reason>"}
+#
+# llm_system_prompt  You are an expert email spam classifier. ...
+
+# ── SpamAssassin rule ─────────────────────────────────────────────────────────
+
+header   LLM_SPAM_CHECK  eval:check_llm_spam()
+describe LLM_SPAM_CHECK  LLM classified this email as spam
+score    LLM_SPAM_CHECK  6.0
+
+# ── Add AI verdict to mail headers ────────────────────────────────────────────
+# Uncomment to expose AI reason and confidence in every processed message.
+# add_header all LLM-Spam-Reason   _LLMSPAMREASON_
+# add_header all LLM-Confidence    _LLMSPAMCONFIDENCE_

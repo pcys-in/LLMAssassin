@@ -1,0 +1,6 @@
+# LLMAssassin - SpamAssassin plugin loader
+# /etc/spamassassin/llmassassin.pre
+#
+# Adjust the path to LLMAssassin.pm if you installed it elsewhere.
+
+loadplugin Mail::SpamAssassin::Plugin::LLMAssassin /etc/spamassassin/LLMAssassin.pm
