@@ -56,6 +56,25 @@ llm_max_body_chars  8000
 # Path to rate limiter state file (must be writable by the SA user)
 # llm_rate_file   /tmp/llmassassin.rate
 
+# ── Subject rewriting ────────────────────────────────────────────────────────
+# When the AI detects spam, prepend [LLMAssassin: reason] to the Subject header.
+# Example: [LLMAssassin: Unsolicited marketing offer] Original subject here
+# Set to 0 to disable.
+llm_rewrite_subject   1
+
+# ── Prompt content ───────────────────────────────────────────────────────────
+# Include SpamAssassin's own score, Bayes probability, and fired rules in the
+# prompt. Set to 0 to have the AI judge purely on email content alone.
+llm_send_sa_signals   1
+
+# ── Debug mode ────────────────────────────────────────────────────────────────
+# 1 = log the full HTTP request payload and response body to the SA debug log.
+# Also enables curl -v to log request/response headers.
+# Credentials are masked automatically in the log output.
+# View with: tail -f /var/log/mail.log | grep "LLMAssassin"
+# Or:        spamassassin -D LLMAssassin -t < test.eml 2>&1 | grep LLMAssassin
+llm_debug   0
+
 # ── System prompt (optional override) ────────────────────────────────────────
 # Only change this if you have a specific use case.
 # Must instruct the model to return:
@@ -67,9 +86,9 @@ llm_max_body_chars  8000
 
 header   LLM_SPAM_CHECK  eval:check_llm_spam()
 describe LLM_SPAM_CHECK  LLM classified this email as spam
-score    LLM_SPAM_CHECK  6.0
+score    LLM_SPAM_CHECK  10
 
 # ── Add AI verdict to mail headers ────────────────────────────────────────────
 # Uncomment to expose AI reason and confidence in every processed message.
-# add_header all LLM-Spam-Reason   _LLMSPAMREASON_
-# add_header all LLM-Confidence    _LLMSPAMCONFIDENCE_
+add_header all LLM-Spam-Reason   _LLMSPAMREASON_
+add_header all LLM-Confidence    _LLMSPAMCONFIDENCE_
